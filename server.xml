@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configure>
+<!--    <network>-->
+<!--        <host hostname="localhost"></host>-->
+<!--    </network>-->
+    <groups>
+        <!--install: 发布操作,会按顺序执行app中的各个app操作-->
+        <group name="install" apps="init,copy,replace,reload,rsync,delete"></group>
+    </groups>
+    <!-- init初始化时需要执行的操作 -->
+    <initApplication name="init">
+            <!--
+            real_server为服务器端源目录的副本，主要用于配置修改和下发;
+            当由于某些原因，在进行新的同步时，如果还存在旧的目录副本，则将其删除
+             -->
+            <initSystemrun command="[ ! -d /export/update/package/real_server/ ] || rm -rf /export/update/package/real_server/" ></initSystemrun>
+    </initApplication>
+    <!-- replace替换操作，也就是配置文件参数替换操作 -->
+    <replaceApplication name="replace">
+            <replace file="/export/update/package/real_server/launch.toml.huge" src="GAME1" dest="10.133.39.11"></replace>
+            <replace file="/export/update/package/real_server/launch.toml.huge" src="GAME2" dest="10.133.39.12"></replace>
+            <replace file="/export/update/package/real_server/launch.toml.huge" src="GAME3" dest="10.133.39.13"></replace>
+            <replace file="/export/update/package/real_server/launch.toml.huge" src="SLAVEDB" dest="10.133.39.10"></replace>
+            <replace file="/export/update/package/real_server/launch.toml.huge" src="IDSERVICE" dest="10.133.39.8"></replace>
+            <replace file="/export/update/package/real_server/launch.toml.huge" src="SERVERID" dest="101"></replace>
+    </replaceApplication>
+    <!-- copy: 服务器端复制操作，便于配置替换、发布及保护服务器端源文件 -->
+    <copyApplication name="copy">
+            <copySystemrun command="cp -rf /export/update/package/server/ /export/update/package/real_server/"></copySystemrun>
+    </copyApplication>
+    <!-- reload: 重载、刷新操作，如某些配置文件在替换后需要变更到特定需求的目录或文件名 -->
+    <reloadApplication name="reload">
+            <reloadSystemrun command="cp -f /export/update/package/real_server/launch.toml.huge /export/update/package/real_server/launch.toml"></reloadSystemrun>
+    </reloadApplication>
+    <!-- rsync：发布操作 -->
+    <rsyncApplication name="rsync">
+            <rsyncSystemrun command="rsync -avvzpc --delete /export/update/package/real_server/ game@game1:/export/server/"></rsyncSystemrun>
+            <rsyncSystemrun command="rsync -avvzpc --delete /export/update/package/real_server/ game@game2:/export/server/"></rsyncSystemrun>
+            <rsyncSystemrun command="rsync -avvzpc --delete /export/update/package/real_server/ game@game3:/export/server/"></rsyncSystemrun>
+    </rsyncApplication>
+    <!-- delete: 扫尾、清理工作;host为空时为本机操作，host不为空时(具体主机IP或hostname)，为远程操作 -->
+    <deleteApplication name="delete">
+            <!-- 清理服务器端目录副本 -->
+            <deleteSystemrun command="rm -rf /export/update/package/real_server" host=""></deleteSystemrun>
+    </deleteApplication>
+</configure>
